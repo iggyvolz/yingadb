@@ -13,10 +13,8 @@ abstract class Condition
     /**
      * Checks if a row satisfies the condition
      *
-     * @param array<string,scalar|null> $row The row to check, associative array of column to value
-     * @param string $class Class to check this condition on
-     * @psalm-param class-string<DatabaseEntry> $class
+     * @param array<string,string|int|float|null> $row The row to check, associative array of column to value
      * @return bool True if the condition is satisfied, otherwise
      */
-    abstract public function check(array $row, string $class): bool;
+    abstract public function check(array $row): bool;
 }

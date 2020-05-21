@@ -13,7 +13,7 @@ interface IDatabase
      * Create a row
      *
      * @param string $table Table to operate on
-     * @param array<string,string|int> $data Associative array of data to insert
+     * @param array<string,string|int|float|null> $data Associative array of data to insert
      * @return null|int If the row contains an auto-increment column, return that row id, else null
      * @throws DuplicateEntry if the entry already exists
      */
@@ -27,7 +27,7 @@ interface IDatabase
      * @param int $offset Where to start
      * @param array<string, bool> $order What column(s) to sort by
      * @param bool $prefetch Whether to fetch all entries immediately
-     * @return iterable An iterator of rows which match the condition
+     * @return iterable<array<string,string|int|float|null>> An iterator of rows which match the condition
      */
     public function read(
         string $table,
@@ -42,7 +42,7 @@ interface IDatabase
      *
      * @param string $table Table to operate on
      * @param Condition $condition Condition to get data for
-     * @param array<string,string|int> $data $data Data to insert into the database
+     * @param array<string,string|int|float|null> $data $data Data to insert into the database
      * @return void
      * @throws DuplicateEntry if the target entry already exists
      */

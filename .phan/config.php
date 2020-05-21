@@ -21,9 +21,5 @@ return [
         '.phan',
         'tests',
         'src/Condition',
-    ],
-    "exclude_file_list" => [
-        "src/Drivers/MemoryDriver.php",
-        "src/Drivers/PDOMysqlDriver.php",
     ]
 ];

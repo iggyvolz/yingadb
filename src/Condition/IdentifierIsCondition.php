@@ -32,7 +32,7 @@ class IdentifierIsCondition extends Condition
      *
      * @param array<string,scalar|null> $row
      */
-    public function check(array $row, string $class): bool
+    public function check(array $row): bool
     {
         $column = $class::getIdentifierName();
         return array_key_exists($column, $row) && ($this->value === $row[$column]);
