@@ -1,0 +1,27 @@
+{
+    "name": "iggyvolz/yingadb",
+    "description": "Database wrapper for PHP",
+    "type": "library",
+    "require": {
+        "iggyvolz/class-properties": "dev-master",
+        "iggyvolz/virtual-attributes": "^0.2.0"
+    },
+    "require-dev": {
+        "phan/phan": "^3.0",
+        "vimeo/psalm": "^3.11",
+        "squizlabs/php_codesniffer": "^3.5",
+        "phpunit/phpunit": "^9.1"
+    },
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Katie Volz",
+            "email": "iggyvolz@gmail.com"
+        }
+    ],
+    "autoload": {
+        "psr-4": {
+            "iggyvolz\\yingadb\\": "src/"
+        }
+    }
+}
