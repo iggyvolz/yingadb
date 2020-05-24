@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace iggyvolz\yingadb\Drivers;
 
-use iggyvolz\yingadb\Condition\Condition;
-use iggyvolz\YingaDB\Exceptions\DuplicateEntry;
+use iggyvolz\yingadb\Condition\Resolved\ResolvedCondition;
+use iggyvolz\yingadb\Exceptions\DuplicateEntry;
 
 interface IDatabase
 {
@@ -22,7 +22,7 @@ interface IDatabase
      * Read a row from the database
      *
      * @param string $table Table to operate on
-     * @param Condition $condition Condition to get data for
+     * @param ResolvedCondition $condition Condition to get data for
      * @param null|int $limit Limit of number of rows to read
      * @param int $offset Where to start
      * @param array<string, bool> $order What column(s) to sort by
@@ -31,7 +31,7 @@ interface IDatabase
      */
     public function read(
         string $table,
-        Condition $condition,
+        ResolvedCondition $condition,
         int $limit = null,
         int $offset = 0,
         array $order = [],
@@ -41,18 +41,18 @@ interface IDatabase
      * Update rows in the database
      *
      * @param string $table Table to operate on
-     * @param Condition $condition Condition to get data for
+     * @param ResolvedCondition $condition Condition to get data for
      * @param array<string,string|int|float|null> $data $data Data to insert into the database
      * @return void
      * @throws DuplicateEntry if the target entry already exists
      */
-    public function update(string $table, Condition $condition, array $data): void;
+    public function update(string $table, ResolvedCondition $condition, array $data): void;
     /**
      * Remove rows from the database
      *
      * @param string $table Table to operate on
-     * @param Condition $condition Condition to remove data for
+     * @param ResolvedCondition $condition Condition to remove data for
      * @return void
      */
-    public function delete(string $table, Condition $condition): void;
+    public function delete(string $table, ResolvedCondition $condition): void;
 }

@@ -35,7 +35,7 @@ class AllCondition extends Condition
 
     public function resolveFor(string $class): ResolvedCondition
     {
-        return new ResolvedAllCondition(array_map(function(Condition $c) use ($class):ResolvedCondition{
+        return new ResolvedAllCondition(...array_map(function(Condition $c) use ($class):ResolvedCondition{
             return $c->resolveFor($class);
         }, $this->conditions));
     }

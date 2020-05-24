@@ -18,8 +18,8 @@ class NotInListCondition extends AnyCondition
         /**
          * @param mixed $val
          */
-            function ($val) use ($column): NotEqualCondition {
-                return new NotEqualCondition($column, $val);
+            function ($val) use ($column): NotEqualToCondition {
+                return new NotEqualToCondition($column, $val);
             },
             $value
         ));

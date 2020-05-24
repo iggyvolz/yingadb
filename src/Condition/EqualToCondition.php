@@ -33,7 +33,7 @@ class EqualToCondition extends Condition
         if(is_null($column)) {
             throw new \LogicException("Could not find property ".$this->property." on $class");
         }
-        $value = $class::fromScalar($this->value);
+        $value = $class::toScalar($this->property, $this->value);
         return new ResolvedEqualToCondition($column, $value);
     }
 }

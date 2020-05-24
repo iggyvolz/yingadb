@@ -5,12 +5,12 @@ declare(strict_types=1);
 namespace iggyvolz\yingadb\Condition;
 
 use iggyvolz\yingadb\Condition\Resolved\ResolvedCondition;
-use iggyvolz\yingadb\Condition\Resolved\ResolvedNotEqualCondition;
+use iggyvolz\yingadb\Condition\Resolved\ResolvedNotEqualToCondition;
 
 /**
  * A condition that is true if & only if a column equals a value
  */
-class NotEqualCondition extends Condition
+class NotEqualToCondition extends Condition
 {
     private string $property;
     /**
@@ -33,7 +33,7 @@ class NotEqualCondition extends Condition
         if(is_null($column)) {
             throw new \LogicException("Could not find property ".$this->property." on $class");
         }
-        $value = $class::fromScalar($this->value);
-        return new ResolvedNotEqualCondition($column, $value);
+        $value = $class::toScalar($this->property, $this->value);
+        return new ResolvedNotEqualToCondition($column, $value);
     }
 }

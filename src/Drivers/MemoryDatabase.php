@@ -4,10 +4,13 @@ declare(strict_types=1);
 
 namespace iggyvolz\yingadb\Drivers;
 
-use iggyvolz\yingadb\Condition\Condition;
+use iggyvolz\yingadb\Condition\Resolved\ResolvedCondition;
 
 class MemoryDatabase implements IDatabase
 {
+    /**
+     * @var array<string, list<array<string,int|string|float|null>>>
+     */
     private array $data=[];
     public function create(string $table, array $data): ?int
     {
@@ -20,7 +23,7 @@ class MemoryDatabase implements IDatabase
         return null;
     }
 
-    public function read(string $table, Condition $condition, int $limit = null, int $offset = 0, array $order = [], bool $prefetch = false): iterable
+    public function read(string $table, ResolvedCondition $condition, int $limit = null, int $offset = 0, array $order = [], bool $prefetch = false): iterable
     {
         if(!array_key_exists($table, $this->data)) {
             return;
@@ -39,7 +42,7 @@ class MemoryDatabase implements IDatabase
         }
     }
 
-    public function update(string $table, Condition $condition, array $data): void
+    public function update(string $table, ResolvedCondition $condition, array $data): void
     {
         if(!array_key_exists($table, $this->data)) {
             return;
@@ -53,7 +56,7 @@ class MemoryDatabase implements IDatabase
         }
     }
 
-    public function delete(string $table, Condition $condition): void
+    public function delete(string $table, ResolvedCondition $condition): void
     {
         if(!array_key_exists($table, $this->data)) {
             return;

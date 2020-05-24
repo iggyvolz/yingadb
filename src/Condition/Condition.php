@@ -16,7 +16,7 @@ abstract class Condition extends ClassProperties
     /**
      * Resolves a condition for a class
      * @param string $class Class to resolve this condition for
-     * @psalm-param class-string $class<DatabaseEntry>
+     * @psalm-param class-string<\iggyvolz\yingadb\DatabaseEntry> $class
      * @return ResolvedCondition Condition resolved with respect to $class
      */
     abstract public function resolveFor(string $class): ResolvedCondition;

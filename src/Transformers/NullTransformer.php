@@ -4,8 +4,6 @@ declare(strict_types=1);
 
 namespace iggyvolz\yingadb\Transformers;
 
-use iggyvolz\yingadb\Exceptions\InvalidTransformerException;
-
 /**
  * Useful for null|??? - checks for null values, otherwise passes to other transformer
  */
