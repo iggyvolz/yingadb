@@ -5,12 +5,12 @@ declare(strict_types=1);
 namespace iggyvolz\yingadb\Condition;
 
 use iggyvolz\yingadb\Condition\Resolved\ResolvedCondition;
-use iggyvolz\yingadb\Condition\Resolved\ResolvedGreaterThanOrEqualToCondition;
+use iggyvolz\yingadb\Condition\Resolved\ResolvedEqualToCondition;
 
 /**
  * A condition that is true if & only if a column equals a value
  */
-class GreaterThanOrEqualToCondition extends Condition
+class EqualToCondition extends Condition
 {
     private string $property;
     /**
@@ -34,9 +34,6 @@ class GreaterThanOrEqualToCondition extends Condition
             throw new \LogicException("Could not find property ".$this->property." on $class");
         }
         $value = $class::fromScalar($this->value);
-        if(!is_int($value) && !is_float($value)) {
-            throw new \LogicException("Could not resolve ".$this->property." to int|float on $class");
-        }
-        return new ResolvedGreaterThanOrEqualToCondition($column, $value);
+        return new ResolvedEqualToCondition($column, $value);
     }
 }

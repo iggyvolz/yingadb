@@ -2,49 +2,41 @@
 
 declare(strict_types=1);
 
-namespace GCCISWebProjects\Utilities\DatabaseTable\Condition;
+namespace iggyvolz\yingadb\Condition;
 
-use DateTimeInterface;
-use GCCISWebProjects\Utilities\ClassProperties\ClassProperty;
-use GCCISWebProjects\Utilities\ClassProperties\Identifiable;
-use GCCISWebProjects\Utilities\DatabaseTable\PDOMysqlDriver;
-use GCCISWebProjects\Utilities\DatabaseTable\Properties\Property;
+use iggyvolz\yingadb\Condition\Resolved\ResolvedCondition;
+use iggyvolz\yingadb\Condition\Resolved\ResolvedLessThanCondition;
 
 /**
- * A condition that is true if & only if a column is greater than a value
+ * A condition that is true if & only if a column equals a value
  */
 class LessThanCondition extends Condition
 {
+    private string $property;
     /**
-     * Column to check
-     *
-     * @var string
-     */
-    private $column;
-    /**
-     * Value to ensure it's greater than
-     *
-     * @var int|string
+     * @var mixed
      */
     private $value;
+
     /**
-     * @param int|string|bool|Identifiable|DateTimeInterface $value
+     * @param mixed $value
      */
-    public function __construct(string $column, $value)
+    public function __construct(string $property, $value)
     {
-        $value = parent::transform($value);
-        [$this->column, $this->value] = [$column, $value];
+        $this->property = $property;
+        $this->value = $value;
     }
-    public function check(array $row): bool
+
+    public function resolveFor(string $class): ResolvedCondition
     {
-        return array_key_exists($this->column, $row) && $this->value < $row[$this->column];
-    }
-    
-    public function getWhereClause(string $class, string &$query): \Iterator
-    {
-        yield $this->value;
-        $property = ClassProperty::getProperty($class, $this->column);
-        assert($property instanceof Property);
-        $query = PDOMysqlDriver::escapeIdentifier($property->getDatabaseName()) . "<?";
+        $column = $class::getColumnName($this->property);
+        if(is_null($column)) {
+            throw new \LogicException("Could not find property ".$this->property." on $class");
+        }
+        $value = $class::fromScalar($this->value);
+        if(!is_int($value) && !is_float($value)) {
+            throw new \LogicException("Could not resolve ".$this->property." to int|float on $class");
+        }
+        return new ResolvedLessThanCondition($column, $value);
     }
 }

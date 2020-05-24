@@ -2,12 +2,13 @@
 
 declare(strict_types=1);
 
-namespace GCCISWebProjects\Utilities\DatabaseTable\Condition;
+namespace iggyvolz\yingadb\Condition;
 
-use GCCISWebProjects\Utilities\ArrayUtils;
+use iggyvolz\yingadb\Condition\Resolved\ResolvedAnyCondition;
+use \iggyvolz\yingadb\Condition\Resolved\ResolvedCondition;
 
 /**
- * A condition that is comprised of a number of other conditions, any of which must be true
+ * A condition that is comprised of a number of other conditions, all of which must be true
  */
 class AnyCondition extends Condition
 {
@@ -16,7 +17,7 @@ class AnyCondition extends Condition
      *
      * @var Condition[]
      */
-    private $conditions;
+    private array $conditions;
     public function __construct(Condition ...$conditions)
     {
         $this->conditions = $conditions;
@@ -31,31 +32,11 @@ class AnyCondition extends Condition
     {
         array_push($this->conditions, $condition);
     }
-    /**
-     * Check if a row passes this condition
-     *
-     * @param array<string,scalar|null> $row
-     */
-    public function check(array $row): bool
+
+    public function resolveFor(string $class): ResolvedCondition
     {
-        return ArrayUtils::some($this->conditions, function (Condition $c) use ($row): bool {
-            return $c->check($row);
-        });
-    }
-    public function getWhereClause(string $class, string &$query): \Iterator
-    {
-        $query = "(";
-        $first = true;
-        foreach (empty($this->conditions) ? [new AlwaysFalseCondition()] : $this->conditions as $condition) {
-            if ($first) {
-                $first = false;
-            } else {
-                $query .= " OR ";
-            }
-            $subquery = "";
-            yield from $condition->getWhereClause($class, $subquery);
-            $query .= $subquery;
-        }
-        $query .= ")";
+        return new ResolvedAnyCondition(array_map(function(Condition $c) use ($class):ResolvedCondition{
+            return $c->resolveFor($class);
+        }, $this->conditions));
     }
 }

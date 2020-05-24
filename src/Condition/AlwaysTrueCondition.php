@@ -2,31 +2,23 @@
 
 declare(strict_types=1);
 
-namespace GCCISWebProjects\Utilities\DatabaseTable\Condition;
+namespace iggyvolz\yingadb\Condition;
 
-use EmptyIterator;
+
+use iggyvolz\yingadb\Condition\Resolved\ResolvedAlwaysTrueCondition;
+use iggyvolz\yingadb\Condition\Resolved\ResolvedCondition;
 
 /**
- * A condition that is always true
+ * A condition that is always false
  */
 class AlwaysTrueCondition extends Condition
 {
     public function __construct()
     {
     }
-    /**
-     * Check if a row passes this condition
-     *
-     * @param array<string,scalar|null> $row
-     */
-    public function check(array $row): bool
+
+    public function resolveFor(string $class): ResolvedCondition
     {
-        return true;
-    }
-    
-    public function getWhereClause(string $class, string &$query): \Iterator
-    {
-        $query = "1=1";
-        return new EmptyIterator();
+        return new ResolvedAlwaysTrueCondition();
     }
 }

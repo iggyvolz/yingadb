@@ -2,9 +2,11 @@
 
 declare(strict_types=1);
 
-namespace GCCISWebProjects\Utilities\DatabaseTable\Condition;
+namespace iggyvolz\yingadb\Condition;
 
-use EmptyIterator;
+
+use iggyvolz\yingadb\Condition\Resolved\ResolvedAlwaysFalseCondition;
+use iggyvolz\yingadb\Condition\Resolved\ResolvedCondition;
 
 /**
  * A condition that is always false
@@ -14,19 +16,9 @@ class AlwaysFalseCondition extends Condition
     public function __construct()
     {
     }
-    /**
-     * Check if a row passes this condition
-     *
-     * @param array<string,scalar|null> $row
-     */
-    public function check(array $row): bool
+
+    public function resolveFor(string $class): ResolvedCondition
     {
-        return false;
-    }
-    
-    public function getWhereClause(string $class, string &$query): \Iterator
-    {
-        $query = "1=0";
-        return new EmptyIterator();
+        return new ResolvedAlwaysFalseCondition();
     }
 }

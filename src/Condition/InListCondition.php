@@ -2,10 +2,10 @@
 
 declare(strict_types=1);
 
-namespace GCCISWebProjects\Utilities\DatabaseTable\Condition;
+namespace iggyvolz\yingadb\Condition;
+
 
 use DateTimeInterface;
-use GCCISWebProjects\Utilities\ClassProperties\Identifiable;
 
 /**
  * A condition where a column must be one of many options
@@ -13,16 +13,16 @@ use GCCISWebProjects\Utilities\ClassProperties\Identifiable;
 class InListCondition extends AnyCondition
 {
     /**
-     * @param int|string|bool|Identifiable|DateTimeInterface ...$value
+     * @param mixed ...$value
      */
     public function __construct(string $column, ...$value)
     {
         parent::__construct(...array_map(
             /**
-            * @param int|string|bool|Identifiable|DateTimeInterface $val
+            * @param mixed $val
             */
-            function ($val) use ($column): EqualCondition {
-                return new EqualCondition($column, $val);
+            function ($val) use ($column): EqualToCondition {
+                return new EqualToCondition($column, $val);
             },
             $value
         ));

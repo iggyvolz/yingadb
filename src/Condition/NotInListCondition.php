@@ -2,25 +2,22 @@
 
 declare(strict_types=1);
 
-namespace GCCISWebProjects\Utilities\DatabaseTable\Condition;
-
-use DateTimeInterface;
-use GCCISWebProjects\Utilities\ClassProperties\Identifiable;
+namespace iggyvolz\yingadb\Condition;
 
 /**
- * A condition where a column must not be one of many options
+ * A condition where a column must be one of many options
  */
-class NotInListCondition extends AllCondition
+class NotInListCondition extends AnyCondition
 {
     /**
-     * @param int|string|bool|Identifiable|DateTimeInterface ...$value
+     * @param mixed ...$value
      */
     public function __construct(string $column, ...$value)
     {
         parent::__construct(...array_map(
-            /**
-            * @param int|string|bool|Identifiable|DateTimeInterface $val
-            */
+        /**
+         * @param mixed $val
+         */
             function ($val) use ($column): NotEqualCondition {
                 return new NotEqualCondition($column, $val);
             },

@@ -15,7 +15,9 @@ class TableName extends VirtualAttribute
     private string $tableName;
     public function __construct(string $tableName)
     {
+        // @phan-suppress-next-line PhanAccessReadOnlyMagicProperty
         $this->tableName = $tableName;
+        parent::__construct($tableName);
     }
     public function __get(string $prop):?string
     {
