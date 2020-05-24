@@ -23,17 +23,16 @@ class DBProperty extends VirtualAttribute implements PostSet, PreGet
         $this->columnName = $columnName;
         parent::__construct($columnName);
     }
-    public function __get(string $prop):?string
+    public function __get(string $prop): ?string
     {
-        if($prop === "columnName") {
+        if ($prop === "columnName") {
             return $this->columnName;
         }
         return null;
     }
     public function runPostSetHook(ClassProperties $target, string $property, $value): void
     {
-        if(!$target instanceof DatabaseEntry)
-        {
+        if (!$target instanceof DatabaseEntry) {
             throw new \LogicException("DBProperty not allowed on non-DatabaseEntry object");
         }
         // @phan-suppress-next-line PhanAccessMethodInternal
@@ -45,8 +44,7 @@ class DBProperty extends VirtualAttribute implements PostSet, PreGet
      */
     public function runPreSetHook(ClassProperties $target, string $property, &$value): void
     {
-        if(!$target instanceof DatabaseEntry)
-        {
+        if (!$target instanceof DatabaseEntry) {
             throw new \LogicException("DBProperty not allowed on non-DatabaseEntry object");
         }
         // @phan-suppress-next-line PhanAccessMethodInternal
@@ -54,12 +52,10 @@ class DBProperty extends VirtualAttribute implements PostSet, PreGet
     }
     public function runPreGetHook(ClassProperties $target, string $property): void
     {
-        if(!$target instanceof DatabaseEntry)
-        {
+        if (!$target instanceof DatabaseEntry) {
             throw new \LogicException("DBProperty not allowed on non-DatabaseEntry object");
         }
         // @phan-suppress-next-line PhanAccessMethodInternal
         $target->runPreGetHook($property);
     }
-
 }

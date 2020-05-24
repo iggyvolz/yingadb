@@ -17,7 +17,7 @@ class FloatTransformer extends Transformer
      */
     public function toScalar($obj)
     {
-        if(!is_float($obj)) {
+        if (!is_float($obj)) {
             throw new InvalidTransformerException();
         }
         return $obj;
@@ -28,7 +28,7 @@ class FloatTransformer extends Transformer
      */
     public function fromScalar($scalar)
     {
-        if(is_float($scalar)) {
+        if (is_float($scalar)) {
             return $scalar;
         }
         throw new InvalidTransformerException();

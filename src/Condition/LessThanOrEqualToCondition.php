@@ -30,12 +30,12 @@ class LessThanOrEqualToCondition extends Condition
     public function resolveFor(string $class): ResolvedCondition
     {
         $column = $class::getColumnName($this->property);
-        if(is_null($column)) {
-            throw new \LogicException("Could not find property ".$this->property." on $class");
+        if (is_null($column)) {
+            throw new \LogicException("Could not find property " . $this->property . " on $class");
         }
         $value = $class::toScalar($this->property, $this->value);
-        if(!is_int($value) && !is_float($value)) {
-            throw new \LogicException("Could not resolve ".$this->property." to int|float on $class");
+        if (!is_int($value) && !is_float($value)) {
+            throw new \LogicException("Could not resolve " . $this->property . " to int|float on $class");
         }
         return new ResolvedLessThanOrEqualToCondition($column, $value);
     }

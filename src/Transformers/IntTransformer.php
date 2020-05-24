@@ -17,7 +17,7 @@ class IntTransformer extends Transformer
      */
     public function toScalar($obj)
     {
-        if(!is_int($obj)) {
+        if (!is_int($obj)) {
             throw new InvalidTransformerException();
         }
         return $obj;
@@ -28,7 +28,7 @@ class IntTransformer extends Transformer
      */
     public function fromScalar($scalar)
     {
-        if(is_int($scalar)) {
+        if (is_int($scalar)) {
             return $scalar;
         }
         throw new InvalidTransformerException();

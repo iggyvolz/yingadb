@@ -19,9 +19,9 @@ class TableName extends VirtualAttribute
         $this->tableName = $tableName;
         parent::__construct($tableName);
     }
-    public function __get(string $prop):?string
+    public function __get(string $prop): ?string
     {
-        if($prop === "tableName") {
+        if ($prop === "tableName") {
             return $this->tableName;
         }
         return null;

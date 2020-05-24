@@ -28,12 +28,12 @@ class ResolvedAllCondition extends ResolvedCondition
      */
     public function check(array $row): bool
     {
-        foreach($this->conditions as $condition) {
-            if(!$condition->check($row)) {
+        foreach ($this->conditions as $condition) {
+            if (!$condition->check($row)) {
                 return false;
             }
         }
         return true;
     }
 }
-(new ReadOnlyProperty)->addToProperty(ResolvedAllCondition::class, "conditions");
+(new ReadOnlyProperty())->addToProperty(ResolvedAllCondition::class, "conditions");

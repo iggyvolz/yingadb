@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace iggyvolz\yingadb\Condition;
 
 use iggyvolz\yingadb\Condition\Resolved\ResolvedAnyCondition;
-use \iggyvolz\yingadb\Condition\Resolved\ResolvedCondition;
+use iggyvolz\yingadb\Condition\Resolved\ResolvedCondition;
 
 /**
  * A condition that is comprised of a number of other conditions, all of which must be true
@@ -35,7 +35,7 @@ class AnyCondition extends Condition
 
     public function resolveFor(string $class): ResolvedCondition
     {
-        return new ResolvedAnyCondition(...array_map(function(Condition $c) use ($class):ResolvedCondition{
+        return new ResolvedAnyCondition(...array_map(function (Condition $c) use ($class): ResolvedCondition {
             return $c->resolveFor($class);
         }, $this->conditions));
     }

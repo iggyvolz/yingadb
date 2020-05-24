@@ -17,10 +17,10 @@ class BoolTransformer extends Transformer
      */
     public function toScalar($obj)
     {
-        if(!is_bool($obj)) {
+        if (!is_bool($obj)) {
             throw new InvalidTransformerException();
         }
-        return $obj?1:0;
+        return $obj ? 1 : 0;
     }
     /**
      * @param int|string|float|null $scalar
@@ -28,9 +28,9 @@ class BoolTransformer extends Transformer
      */
     public function fromScalar($scalar)
     {
-        if($scalar === 1) {
+        if ($scalar === 1) {
             return true;
-        } elseif($scalar === 0) {
+        } elseif ($scalar === 0) {
             return false;
         } else {
             throw new InvalidTransformerException();

@@ -19,7 +19,7 @@ class DateTimeTransformer extends Transformer
      */
     public function toScalar($obj)
     {
-        if(!$obj instanceof DateTime) {
+        if (!$obj instanceof DateTime) {
             throw new InvalidTransformerException();
         }
         return intval($obj->format("U"));
@@ -30,9 +30,9 @@ class DateTimeTransformer extends Transformer
      */
     public function fromScalar($scalar)
     {
-        if(is_int($scalar)) {
+        if (is_int($scalar)) {
             $dt = DateTime::createFromFormat("U", strval($scalar));
-            if(!$dt) {
+            if (!$dt) {
                 throw new \RuntimeException("Datetime converstion failure for $scalar");
             }
             return $dt;

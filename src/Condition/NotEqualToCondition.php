@@ -30,8 +30,8 @@ class NotEqualToCondition extends Condition
     public function resolveFor(string $class): ResolvedCondition
     {
         $column = $class::getColumnName($this->property);
-        if(is_null($column)) {
-            throw new \LogicException("Could not find property ".$this->property." on $class");
+        if (is_null($column)) {
+            throw new \LogicException("Could not find property " . $this->property . " on $class");
         }
         $value = $class::toScalar($this->property, $this->value);
         return new ResolvedNotEqualToCondition($column, $value);

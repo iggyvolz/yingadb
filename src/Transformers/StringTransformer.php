@@ -17,7 +17,7 @@ class StringTransformer extends Transformer
      */
     public function toScalar($obj)
     {
-        if(!is_string($obj)) {
+        if (!is_string($obj)) {
             throw new InvalidTransformerException();
         }
         return $obj;
@@ -28,7 +28,7 @@ class StringTransformer extends Transformer
      */
     public function fromScalar($scalar)
     {
-        if(is_string($scalar)) {
+        if (is_string($scalar)) {
             return $scalar;
         }
         throw new InvalidTransformerException();

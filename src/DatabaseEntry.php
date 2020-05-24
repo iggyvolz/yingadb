@@ -28,18 +28,20 @@ use iggyvolz\ClassProperties\Attributes\ReadOnlyProperty;
 abstract class DatabaseEntry extends Identifiable implements Initializable
 {
     /**
-     * @var array<string,array<string,string>> Associative array of property names to column names, indexed by class name
+     * @var array<string,array<string,string>>
+     *    Associative array of property names to column names, indexed by class name
      * @psalm-var array<class-string<self>,array<string,string>>
      */
-    private static array $columnNames=[];
+    private static array $columnNames = [];
     /**
-     * @var array<string,array<string,string>> Associative array of column names to property names, indexed by class name
+     * @var array<string,array<string,string>>
+     *     Associative array of column names to property names, indexed by class name
      * @psalm-var array<class-string<self>,array<string,string>>
      */
-    private static array $reversedColumnNames=[];
+    private static array $reversedColumnNames = [];
     public static function init(): void
     {
-        if(array_key_exists(static::class, static::$columnNames)) {
+        if (array_key_exists(static::class, static::$columnNames)) {
             return;
         }
         static::$columnNames[static::class] = static::getColumns();
@@ -49,22 +51,28 @@ abstract class DatabaseEntry extends Identifiable implements Initializable
     /**
      * @return array<string,string> Associative array of property names to column names
      */
-    private static function getColumns():array
+    private static function getColumns(): array
     {
         return iterator_to_array((/**
          * @return \Generator<string,string>
-         */function():\Generator{
+         */function (): \Generator {
             $refl = new ReflectionClass(static::class);
 
-            foreach($refl->getProperties() as $property) {
-                if(!empty($attributes = VirtualAttribute::getAttributes($property, DBProperty::class, ReflectionAttribute::IS_INSTANCEOF))) {
-                    /** @var TableName */
-                    $attr = $attributes[0]->newInstance();
-                    $columnName = $attr->columnName ?? $property->getName();
-                    yield $property->getName() => $columnName;
-                }
-            }
-        })());
+    foreach ($refl->getProperties() as $property) {
+        if (
+            !empty($attributes = VirtualAttribute::getAttributes(
+                $property,
+                DBProperty::class,
+                ReflectionAttribute::IS_INSTANCEOF
+            ))
+        ) {
+            /** @var TableName */
+            $attr = $attributes[0]->newInstance();
+            $columnName = $attr->columnName ?? $property->getName();
+            yield $property->getName() => $columnName;
+        }
+    }
+})());
     }
 
     /**
@@ -82,7 +90,7 @@ abstract class DatabaseEntry extends Identifiable implements Initializable
      */
     // <<ReadOnlyProperty>>
     protected IDatabase $database;
-    protected static ?IDatabase $defaultDatabase=null;
+    protected static ?IDatabase $defaultDatabase = null;
     /**
      * Get the name of this table
      */
@@ -92,7 +100,7 @@ abstract class DatabaseEntry extends Identifiable implements Initializable
         $refl = new ReflectionClass(static::class);
         do {
             $attributes = VirtualAttribute::getAttributes($refl, TableName::class, ReflectionAttribute::IS_INSTANCEOF);
-            if(!empty($attributes)) {
+            if (!empty($attributes)) {
                 /** @var TableName */
                 $attr = $attributes[0]->newInstance();
                 return $attr->tableName;
@@ -107,7 +115,7 @@ abstract class DatabaseEntry extends Identifiable implements Initializable
     {
         static::init();
         $database = $database ?? self::$defaultDatabase;
-        if(is_null($database)) {
+        if (is_null($database)) {
             throw new \RuntimeException("No default database set");
         }
         // @phan-suppress-next-line PhanAccessReadOnlyMagicProperty
@@ -116,7 +124,7 @@ abstract class DatabaseEntry extends Identifiable implements Initializable
          * @var array<string, string|int>
          */
         $row = [];
-        foreach(self::$columnNames[static::class] as $propertyName => $columnName) {
+        foreach (self::$columnNames[static::class] as $propertyName => $columnName) {
             $row[$columnName] = static::toScalar($propertyName, $this->__get($propertyName));
         }
         $database->create(static::getTableName(), $row);
@@ -132,17 +140,19 @@ abstract class DatabaseEntry extends Identifiable implements Initializable
     public static function updateMany(array $data, Condition $condition, IDatabase $database = null): void
     {
         $database = $database ?? static::$defaultDatabase;
-        if(is_null($database)) throw new \Exception("No default database set");
+        if (is_null($database)) {
+            throw new \Exception("No default database set");
+        }
         $dataTransformed = []; // TODO
         $database->update(static::getTableName(), $condition->resolveFor(static::class), $dataTransformed);
     }
-    public static function getColumnName(string $propertyName):?string
+    public static function getColumnName(string $propertyName): ?string
     {
         static::init();
         return static::$columnNames[static::class][$propertyName] ?? null;
     }
 
-    public static function getFromColumnName(string $columnName):?string
+    public static function getFromColumnName(string $columnName): ?string
     {
         static::init();
         return static::$reversedColumnNames[static::class][$columnName] ?? null;
@@ -151,9 +161,9 @@ abstract class DatabaseEntry extends Identifiable implements Initializable
     /**
      * @internal
      */
-    public function runPreGetHook(string $property):void
+    public function runPreGetHook(string $property): void
     {
-        if($this->deleted) {
+        if ($this->deleted) {
             throw new \RuntimeException("Cannot get a property on a deleted object");
         }
     }
@@ -162,7 +172,7 @@ abstract class DatabaseEntry extends Identifiable implements Initializable
      * @param mixed $value
      * @internal
      */
-    public function runPostSetHook(string $property, $value):void
+    public function runPostSetHook(string $property, $value): void
     {
         $this->modified[$property] = static::toScalar($property, $value);
     }
@@ -170,14 +180,14 @@ abstract class DatabaseEntry extends Identifiable implements Initializable
     /**
      * @internal
      */
-    public function runPreSetHook():void
+    public function runPreSetHook(): void
     {
-        if($this->deleted) {
+        if ($this->deleted) {
             throw new \RuntimeException("Cannot set a property on a deleted object");
         }
     }
 
-    private static function getTransformer(string $propertyName):Transformer
+    private static function getTransformer(string $propertyName): Transformer
     {
         throw new RuntimeException("TODO");
     }
@@ -207,10 +217,10 @@ abstract class DatabaseEntry extends Identifiable implements Initializable
      */
     public function sync(): void
     {
-        if($this->deleted) {
+        if ($this->deleted) {
             throw new \RuntimeException("Cannot synchronize a deleted object");
         }
-        if(empty($this->modified)) {
+        if (empty($this->modified)) {
             // No-op, the object is not modified
             return;
         }
@@ -227,7 +237,7 @@ abstract class DatabaseEntry extends Identifiable implements Initializable
     public static function deleteMany(Condition $condition, IDatabase $database = null): void
     {
         $database = $database ?? static::$defaultDatabase;
-        if(!$database) {
+        if (!$database) {
             throw new \Exception("No default database set");
         }
         $database->delete(static::getTableName(), $condition->resolveFor(static::class));
@@ -241,7 +251,7 @@ abstract class DatabaseEntry extends Identifiable implements Initializable
      */
     public function delete(): void
     {
-        if($this->deleted) {
+        if ($this->deleted) {
             throw new \RuntimeException("Cannot synchronize an already deleted object");
         }
         $identifierName = static::getIdentifierName();
@@ -262,26 +272,34 @@ abstract class DatabaseEntry extends Identifiable implements Initializable
         int $offset = 0,
         array $order = [],
         bool $prefetch = true
-    ):iterable
-    {
-        if(is_null($database)) {
-            if(self::$defaultDatabase) {
+    ): iterable {
+        if (is_null($database)) {
+            if (self::$defaultDatabase) {
                 return static::getAll($condition, self::$defaultDatabase, $limit, $offset, $order, $prefetch);
             } else {
                 throw new \RuntimeException("No default database set");
             }
         }
-        if(is_array($database)) {
-            foreach($database as $db) {
+        if (is_array($database)) {
+            foreach ($database as $db) {
                 yield from static::getAll($condition, $db, $limit, $offset, $order, $prefetch);
             }
             return;
         }
-        foreach($database->read(static::getTableName(), ($condition ?? new AlwaysTrueCondition())->resolveFor(static::class), $limit, $offset, $order, $prefetch) as $row) {
+        foreach (
+            $database->read(
+                static::getTableName(),
+                ($condition ?? new AlwaysTrueCondition())->resolveFor(static::class),
+                $limit,
+                $offset,
+                $order,
+                $prefetch
+            ) as $row
+        ) {
             $self = static::createWithoutConstructor();
-            foreach($row as $key => $value) {
+            foreach ($row as $key => $value) {
                 $property = static::getFromColumnName($key);
-                if(!is_null($property)) {
+                if (!is_null($property)) {
                     $self->__set($property, $self->fromScalar($property, $value));
                 }
             }
@@ -292,7 +310,7 @@ abstract class DatabaseEntry extends Identifiable implements Initializable
     /**
      * @return static
      */
-    private static function createWithoutConstructor():self
+    private static function createWithoutConstructor(): self
     {
         $inst = (new ReflectionClass(static::class))->newInstanceWithoutConstructor();
         return $inst;
@@ -308,9 +326,8 @@ abstract class DatabaseEntry extends Identifiable implements Initializable
         $database = null,
         int $offset = 0,
         array $order = []
-    ):?self
-    {
-        foreach(static::getAll($condition, $database, 1, $offset, $order, false) as $entry) {
+    ): ?self {
+        foreach (static::getAll($condition, $database, 1, $offset, $order, false) as $entry) {
             return $entry;
         }
         return null;
@@ -325,16 +342,16 @@ abstract class DatabaseEntry extends Identifiable implements Initializable
      */
     public static function getFromIdentifier($identifier): ?self
     {
-        if($identifier instanceof Identifiable) {
+        if ($identifier instanceof Identifiable) {
             $identifier = $identifier->getIdentifier();
         }
         return static::get(new EqualToCondition(static::getIdentifierName(), $identifier));
     }
     public function __destruct()
     {
-        if(!$this->deleted) {
+        if (!$this->deleted) {
             $this->sync();
         }
     }
 }
-(new ReadOnlyProperty)->addToProperty(DatabaseEntry::class, "database");
+(new ReadOnlyProperty())->addToProperty(DatabaseEntry::class, "database");

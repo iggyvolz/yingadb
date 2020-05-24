@@ -10,10 +10,10 @@ abstract class Transformer
      * @param mixed $obj
      * @return int|string|float|null
      */
-    public abstract function toScalar($obj);
+    abstract public function toScalar($obj);
     /**
      * @param int|string|float|null $scalar
      * @return mixed
      */
-    public abstract function fromScalar($scalar);
+    abstract public function fromScalar($scalar);
 }

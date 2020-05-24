@@ -25,7 +25,7 @@ class NullTransformer extends Transformer
      */
     public function toScalar($obj)
     {
-        if(is_null($obj)) {
+        if (is_null($obj)) {
             return null;
         } else {
             return $this->other->toScalar($obj);
@@ -37,7 +37,7 @@ class NullTransformer extends Transformer
      */
     public function fromScalar($scalar)
     {
-        if(is_null($scalar)) {
+        if (is_null($scalar)) {
             return null;
         } else {
             return $this->other->fromScalar($scalar);

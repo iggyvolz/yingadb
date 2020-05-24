@@ -19,7 +19,7 @@ class MicroDateTimeTransformer extends Transformer
      */
     public function toScalar($obj)
     {
-        if(!$obj instanceof DateTime) {
+        if (!$obj instanceof DateTime) {
             throw new InvalidTransformerException();
         }
         return intval($obj->format("U")) * 1000 * 1000 + intval($obj->format("u"));
@@ -30,11 +30,11 @@ class MicroDateTimeTransformer extends Transformer
      */
     public function fromScalar($scalar)
     {
-        if(is_int($scalar)) {
+        if (is_int($scalar)) {
             $seconds = floor($scalar / (1000 * 1000));
             $microseconds = $scalar % (1000 * 1000);
             $dt = DateTime::createFromFormat("U|u", "$seconds|$microseconds");
-            if(!$dt) {
+            if (!$dt) {
                 throw new \RuntimeException("Datetime converstion failure for $scalar");
             }
             return $dt;

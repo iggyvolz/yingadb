@@ -28,9 +28,9 @@ class ResolvedMatchesRegexCondition extends ResolvedCondition
      */
     public function check(array $row): bool
     {
-        $val = $row[$this->column]??null;
+        $val = $row[$this->column] ?? null;
         return is_string($val) && preg_match($this->regex, $val) === 1;
     }
 }
-(new ReadOnlyProperty)->addToProperty(ResolvedEqualToCondition::class, "column");
-(new ReadOnlyProperty)->addToProperty(ResolvedEqualToCondition::class, "regex");
+(new ReadOnlyProperty())->addToProperty(ResolvedEqualToCondition::class, "column");
+(new ReadOnlyProperty())->addToProperty(ResolvedEqualToCondition::class, "regex");

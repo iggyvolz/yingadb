@@ -34,8 +34,8 @@ class ResolvedEqualToCondition extends ResolvedCondition
      */
     public function check(array $row): bool
     {
-        return ($row[$this->column]??null) === $this->value;
+        return ($row[$this->column] ?? null) === $this->value;
     }
 }
-(new ReadOnlyProperty)->addToProperty(ResolvedEqualToCondition::class, "column");
-(new ReadOnlyProperty)->addToProperty(ResolvedEqualToCondition::class, "value");
+(new ReadOnlyProperty())->addToProperty(ResolvedEqualToCondition::class, "column");
+(new ReadOnlyProperty())->addToProperty(ResolvedEqualToCondition::class, "value");

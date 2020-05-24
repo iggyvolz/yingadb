@@ -38,15 +38,15 @@ abstract class ResolvedComparatorCondition extends ResolvedCondition
      */
     public function check(array $row): bool
     {
-        $val = $row[$this->column]??null;
-        if(!is_int($val) && !is_float($val)) {
+        $val = $row[$this->column] ?? null;
+        if (!is_int($val) && !is_float($val)) {
             return false;
         }
-        if($val === $this->value) {
+        if ($val === $this->value) {
             return $this->allowEqual;
         }
         return ($val < $this->value) === $this->lessThan;
     }
 }
-(new ReadOnlyProperty)->addToProperty(ResolvedEqualToCondition::class, "column");
-(new ReadOnlyProperty)->addToProperty(ResolvedEqualToCondition::class, "value");
+(new ReadOnlyProperty())->addToProperty(ResolvedEqualToCondition::class, "column");
+(new ReadOnlyProperty())->addToProperty(ResolvedEqualToCondition::class, "value");

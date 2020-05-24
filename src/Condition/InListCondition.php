@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace iggyvolz\yingadb\Condition;
 
-
 use DateTimeInterface;
 
 /**
