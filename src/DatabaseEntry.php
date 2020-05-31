@@ -128,7 +128,6 @@ abstract class DatabaseEntry extends Identifiable implements Initializable
             $row[$columnName] = static::toScalar($propertyName, $this->__get($propertyName));
         }
         $database->create(static::getTableName(), $row);
-        $this->database = $database;
         parent::__construct();
     }
     /**
@@ -319,7 +318,7 @@ abstract class DatabaseEntry extends Identifiable implements Initializable
     /**
      * @param null|IDatabase|IDatabase[] $database Database(s) to search from, or null for the default
      * @param array<string, bool> $order Ordering of the results: column => ascending(true)/descending(false)
-     * @return static
+     * @return ?static
      */
     public static function get(
         Condition $condition,
