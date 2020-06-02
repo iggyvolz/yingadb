@@ -4,8 +4,6 @@ declare(strict_types=1);
 
 namespace iggyvolz\yingadb\Condition\Resolved;
 
-use iggyvolz\ClassProperties\Attributes\ReadOnlyProperty;
-
 class ResolvedAlwaysTrueCondition extends ResolvedCondition
 {
     public function __construct()

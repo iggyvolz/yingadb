@@ -21,7 +21,9 @@
     ],
     "autoload": {
         "psr-4": {
-            "iggyvolz\\yingadb\\": "src/"
+            "iggyvolz\\yingadb\\": "src/",
+            "iggyvolz\\yingadb\\tests\\": "tests/",
+            "iggyvolz\\yingadb\\examples\\": "examples/"
         }
     }
 }

@@ -20,6 +20,5 @@ return [
         'vendor',
         '.phan',
         'tests',
-        'src/Condition',
     ]
 ];

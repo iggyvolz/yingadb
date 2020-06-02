@@ -27,7 +27,9 @@ abstract class ResolvedComparatorCondition extends ResolvedCondition
      */
     public function __construct(string $column, $value, bool $lessThan, bool $allowEqual)
     {
+        // @phan-suppress-next-line PhanAccessReadOnlyMagicProperty
         $this->column = $column;
+        // @phan-suppress-next-line PhanAccessReadOnlyMagicProperty
         $this->value = $value;
         $this->lessThan = $lessThan;
         $this->allowEqual = $allowEqual;

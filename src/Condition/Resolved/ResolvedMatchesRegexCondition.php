@@ -8,7 +8,7 @@ use iggyvolz\ClassProperties\Attributes\ReadOnlyProperty;
 
 /**
  * @property-read string $column
- * @property-read float|int|string|null $value
+ * @property-read string $regex
  */
 class ResolvedMatchesRegexCondition extends ResolvedCondition
 {
@@ -19,7 +19,9 @@ class ResolvedMatchesRegexCondition extends ResolvedCondition
 
     public function __construct(string $column, string $regex)
     {
+        // @phan-suppress-next-line PhanAccessReadOnlyMagicProperty
         $this->column = $column;
+        // @phan-suppress-next-line PhanAccessReadOnlyMagicProperty
         $this->regex = $regex;
     }
 
@@ -32,5 +34,5 @@ class ResolvedMatchesRegexCondition extends ResolvedCondition
         return is_string($val) && preg_match($this->regex, $val) === 1;
     }
 }
-(new ReadOnlyProperty())->addToProperty(ResolvedEqualToCondition::class, "column");
-(new ReadOnlyProperty())->addToProperty(ResolvedEqualToCondition::class, "regex");
+(new ReadOnlyProperty())->addToProperty(ResolvedMatchesRegexCondition::class, "column");
+(new ReadOnlyProperty())->addToProperty(ResolvedMatchesRegexCondition::class, "regex");

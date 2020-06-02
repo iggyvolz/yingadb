@@ -4,8 +4,6 @@ declare(strict_types=1);
 
 namespace iggyvolz\yingadb\Condition;
 
-use DateTimeInterface;
-
 /**
  * A condition where a column must be one of many options
  */

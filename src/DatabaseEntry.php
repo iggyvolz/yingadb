@@ -4,21 +4,31 @@ declare(strict_types=1);
 
 namespace iggyvolz\yingadb;
 
-use RuntimeException;
-use iggyvolz\yingadb\Condition\AlwaysTrueCondition;
-use iggyvolz\yingadb\Condition\EqualToCondition;
-use iggyvolz\yingadb\Transformers\Transformer;
+use DateTime;
+use Generator;
 use ReflectionClass;
+use RuntimeException;
+use ReflectionProperty;
+use ReflectionNamedType;
 use iggyvolz\yingadb\Drivers\IDatabase;
 use iggyvolz\Initializable\Initializable;
 use iggyvolz\yingadb\Condition\Condition;
 use iggyvolz\ClassProperties\Identifiable;
 use iggyvolz\yingadb\Attributes\TableName;
 use iggyvolz\yingadb\Attributes\DBProperty;
+use iggyvolz\yingadb\Transformers\Transformer;
 use iggyvolz\yingadb\Exceptions\DuplicateEntry;
 use iggyvolz\virtualattributes\VirtualAttribute;
+use iggyvolz\yingadb\Condition\EqualToCondition;
+use iggyvolz\yingadb\Transformers\IntTransformer;
+use iggyvolz\yingadb\Transformers\NullTransformer;
 use iggyvolz\virtualattributes\ReflectionAttribute;
+use iggyvolz\yingadb\Condition\AlwaysTrueCondition;
+use iggyvolz\yingadb\Transformers\FloatTransformer;
+use iggyvolz\yingadb\Transformers\StringTransformer;
+use iggyvolz\yingadb\Transformers\DateTimeTransformer;
 use iggyvolz\ClassProperties\Attributes\ReadOnlyProperty;
+use iggyvolz\yingadb\Transformers\IdentifiableTransformer;
 
 /**
  * A class representing a row in a database row
@@ -27,6 +37,12 @@ use iggyvolz\ClassProperties\Attributes\ReadOnlyProperty;
  */
 abstract class DatabaseEntry extends Identifiable implements Initializable
 {
+    /**
+     * @var array<string,array<string,Transformer>>
+     *     Associative array of property names to transformers, indexed by class name
+     * @psalm-var array<class-string<self>,array<string,Transformer>>
+     */
+    private static array $transformers = [];
     /**
      * @var array<string,array<string,string>>
      *    Associative array of property names to column names, indexed by class name
@@ -46,6 +62,89 @@ abstract class DatabaseEntry extends Identifiable implements Initializable
         }
         static::$columnNames[static::class] = static::getColumns();
         static::$reversedColumnNames[static::class] = array_flip(static::$columnNames[static::class]);
+        static::$transformers[static::class] = static::getTransformers();
+        parent::init();
+    }
+
+    /**
+     * @return array<string,Transformer>
+     */
+    private static function getTransformers(): array
+    {
+        return iterator_to_array((/**
+         * @return \Generator<string,Transformer>
+         */function (): \Generator {
+            $refl = new ReflectionClass(static::class);
+
+    foreach ($refl->getProperties() as $property) {
+        if (
+            !empty($attributes = VirtualAttribute::getAttributes(
+                $property,
+                DBProperty::class,
+                ReflectionAttribute::IS_INSTANCEOF
+            ))
+        ) {
+            if (
+                !empty($attributes = VirtualAttribute::getAttributes(
+                    $property,
+                    Transformer::class,
+                    ReflectionAttribute::IS_INSTANCEOF
+                ))
+            ) {
+                /** @var Transformer */
+                $attr = $attributes[0]->newInstance();
+                yield $property->getName() => $attr;
+            } else {
+                yield $property->getName() => static::getTransformerFor($property);
+            }
+        }
+    }
+})());
+    }
+
+    private static function getTransformerFor(ReflectionProperty $property, bool $alreadyWrapped = false): Transformer
+    {
+        // Get transformer type based off property type
+        $type = $property->getType();
+        $pname = $property->getName();
+        if (!$type) {
+            throw new \LogicException(
+                "Could not autodetect transformer for untyped property $pname"
+            );
+        }
+        if (!$type instanceof ReflectionNamedType) {
+            throw new \LogicException(
+                "Could not autodetect transformer for union typed property $pname"
+            );
+        }
+        if ($type->allowsNull() && !$alreadyWrapped) {
+            return new NullTransformer(static::getTransformerFor($property, true));
+        }
+        if ($type->isBuiltin()) {
+            switch ($type->getName()) {
+                case "int":
+                    return new IntTransformer();
+                case "string":
+                    return new StringTransformer();
+                case "float":
+                    return new FloatTransformer();
+                default:
+                    throw new \LogicException("Could not get transformer type for " . $type->getName());
+            }
+        }
+        $tname = $type->getName();
+        if (is_subclass_of($tname, Identifiable::class)) {
+            $otherClass = new ReflectionClass($tname);
+            $otherIdentifier = $otherClass->getProperty($tname::getIdentifierName());
+            $identifiableTransformer = static::getTransformerFor($otherIdentifier);
+            return new IdentifiableTransformer($identifiableTransformer, $tname);
+        }
+        switch ($type->getName()) {
+            case DateTime::class:
+                return new DateTimeTransformer();
+            default:
+                throw new \LogicException("Could not get transformer type for " . $type->getName());
+        }
     }
 
     /**
@@ -91,6 +190,14 @@ abstract class DatabaseEntry extends Identifiable implements Initializable
     // <<ReadOnlyProperty>>
     protected IDatabase $database;
     protected static ?IDatabase $defaultDatabase = null;
+    public static function setDefaultDatabase(?IDatabase $defaultDatabase): void
+    {
+        self::$defaultDatabase = $defaultDatabase;
+    }
+    public static function getDefaultDatabase(): ?IDatabase
+    {
+        return self::$defaultDatabase;
+    }
     /**
      * Get the name of this table
      */
@@ -140,9 +247,19 @@ abstract class DatabaseEntry extends Identifiable implements Initializable
     {
         $database = $database ?? static::$defaultDatabase;
         if (is_null($database)) {
-            throw new \Exception("No default database set");
+            throw new \RuntimeException("No default database set");
         }
-        $dataTransformed = []; // TODO
+        $dataTransformed = [];
+        /**
+         * @var mixed $value
+         */
+        foreach ($data as $prop => $value) {
+            $col = static::getColumnName($prop);
+            if (is_null($col)) {
+                throw new RuntimeException("Invalid property name $prop for updating");
+            }
+            $dataTransformed[$col] = static::toScalar($prop, $value);
+        }
         $database->update(static::getTableName(), $condition->resolveFor(static::class), $dataTransformed);
     }
     public static function getColumnName(string $propertyName): ?string
@@ -188,7 +305,12 @@ abstract class DatabaseEntry extends Identifiable implements Initializable
 
     private static function getTransformer(string $propertyName): Transformer
     {
-        throw new RuntimeException("TODO");
+        static::init();
+        $transformer = self::$transformers[static::class][$propertyName] ?? null;
+        if (is_null($transformer)) {
+            throw new \InvalidArgumentException();
+        }
+        return $transformer;
     }
 
     /**
@@ -237,7 +359,7 @@ abstract class DatabaseEntry extends Identifiable implements Initializable
     {
         $database = $database ?? static::$defaultDatabase;
         if (!$database) {
-            throw new \Exception("No default database set");
+            throw new \RuntimeException("No default database set");
         }
         $database->delete(static::getTableName(), $condition->resolveFor(static::class));
     }
@@ -251,7 +373,7 @@ abstract class DatabaseEntry extends Identifiable implements Initializable
     public function delete(): void
     {
         if ($this->deleted) {
-            throw new \RuntimeException("Cannot synchronize an already deleted object");
+            throw new \RuntimeException("Cannot delete an already deleted object");
         }
         $identifierName = static::getIdentifierName();
         $condition = new EqualToCondition(static::getIdentifierName(), $this->getIdentifier());
@@ -263,6 +385,8 @@ abstract class DatabaseEntry extends Identifiable implements Initializable
      * @param null|IDatabase|IDatabase[] $database Database(s) to search from, or null for the default
      * @param array<string, bool> $order Ordering of the results: column => ascending(true)/descending(false)
      * @return iterable<static>
+     * @phan-return iterable<DatabaseEntry>
+     *   -> https://github.com/phan/phan/issues/2147
      */
     public static function getAll(
         Condition $condition = null,
@@ -274,16 +398,59 @@ abstract class DatabaseEntry extends Identifiable implements Initializable
     ): iterable {
         if (is_null($database)) {
             if (self::$defaultDatabase) {
-                return static::getAll($condition, self::$defaultDatabase, $limit, $offset, $order, $prefetch);
+                yield from static::getAll($condition, self::$defaultDatabase, $limit, $offset, $order, $prefetch);
             } else {
                 throw new \RuntimeException("No default database set");
             }
+            return;
         }
         if (is_array($database)) {
-            foreach ($database as $db) {
-                yield from static::getAll($condition, $db, $limit, $offset, $order, $prefetch);
+            if (empty($order)) {
+                foreach ($database as $db) {
+                    yield from static::getAll($condition, $db, $limit, $offset, $order, $prefetch);
+                }
+            } else {
+                $data = iterator_to_array(
+                    (
+                        /** @return \Generator<static> */
+                        function () use ($prefetch, $order, $offset, $limit, $condition, $database): Generator {
+                            foreach ($database as $db) {
+                                yield from static::getAll($condition, $db, $limit, $offset, $order, $prefetch);
+                            }
+                        })(),
+                    false
+                );
+                usort($data, function (self $s1, self $s2) use ($order): int {
+                    foreach ($order as $prop => $asc) {
+                        $val1 = static::toScalar($prop, $s1->$prop);
+                        $val2 = static::toScalar($prop, $s2->$prop);
+                        $comp = $val1 <=> $val2;
+                        if ($comp === 0) {
+                            continue;
+                        }
+                        if (!$asc) {
+                            $comp *= -1;
+                        }
+                        return $comp;
+                    }
+                    // Undefined behaviour
+                    // @codeCoverageIgnoreStart
+                    return 0;
+                    // @codeCoverageIgnoreEnd
+                });
+                $data = array_values($data);
+                yield from $data;
             }
             return;
+        }
+        // Translate order into column names
+        $newOrder = [];
+        foreach ($order as $prop => $val) {
+            $colName = static::getColumnName($prop);
+            if (is_null($colName)) {
+                throw new RuntimeException("Invalid property name $prop for sorting");
+            }
+            $newOrder[$colName] = $val;
         }
         foreach (
             $database->read(
@@ -291,11 +458,13 @@ abstract class DatabaseEntry extends Identifiable implements Initializable
                 ($condition ?? new AlwaysTrueCondition())->resolveFor(static::class),
                 $limit,
                 $offset,
-                $order,
+                $newOrder,
                 $prefetch
             ) as $row
         ) {
             $self = static::createWithoutConstructor();
+            // @phan-suppress-next-line PhanAccessReadOnlyMagicProperty
+            $self->database = $database;
             foreach ($row as $key => $value) {
                 $property = static::getFromColumnName($key);
                 if (!is_null($property)) {

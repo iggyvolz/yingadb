@@ -25,7 +25,9 @@ class ResolvedNotEqualToCondition extends ResolvedCondition
      */
     public function __construct(string $column, $value)
     {
+        // @phan-suppress-next-line PhanAccessReadOnlyMagicProperty
         $this->column = $column;
+        // @phan-suppress-next-line PhanAccessReadOnlyMagicProperty
         $this->value = $value;
     }
 

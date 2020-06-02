@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace iggyvolz\yingadb\Drivers;
 
+use Closure;
 use iggyvolz\yingadb\Condition\Resolved\ResolvedCondition;
 
 class MemoryDatabase implements IDatabase
@@ -11,7 +12,7 @@ class MemoryDatabase implements IDatabase
     /**
      * @var array<string, list<array<string,int|string|float|null>>>
      */
-    private array $data = [];
+    public array $data = [];
     public function create(string $table, array $data): ?int
     {
         if (!array_key_exists($table, $this->data)) {
@@ -32,18 +33,52 @@ class MemoryDatabase implements IDatabase
         bool $prefetch = false
     ): iterable {
         if (!array_key_exists($table, $this->data)) {
-            return;
+            return [];
         }
-        $i = 0;
-        foreach ($this->data[$table] as $row) {
-            if (!is_null($limit) && $i >= $limit + $offset) {
-                break;
-            }
-            if ($condition->check($row)) {
-                if ($i >= $limit) {
-                    yield $row;
+        $data = iterator_to_array($this->initialRead($table, $condition), false);
+        usort($data, static::multiSort($order));
+        return array_slice($data, $offset, $limit);
+    }
+
+    /**
+    * @param array<string, bool> $order What column(s) to sort by
+    * @return Closure(array<string, int|string|float|null>, array<string, int|string|float|null>):int
+    */
+    private function multiSort(array $order): Closure
+    {
+        return
+        /**
+        * @param array<string,int|string|float|null> $row1
+        * @param array<string,int|string|float|null> $row2
+        */
+        function (array $row1, array $row2) use ($order): int {
+            foreach ($order as $col => $asc) {
+                if (array_key_exists($col, $row1) && array_key_exists($col, $row2)) {
+                    $comp = $row1[$col] <=> $row2[$col];
+                    if ($comp === 0) {
+                        continue;
+                    }
+                    if (!$asc) {
+                        $comp *= -1;
+                    }
+                    return $comp;
                 }
-                $i++;
+            }
+            return 0;
+        };
+    }
+
+    /**
+     * @return \Generator<int, array<string, float|int|null|string>>
+     * @phan-return \Generator<array<string, float|int|null|string>>
+     */
+    private function initialRead(
+        string $table,
+        ResolvedCondition $condition
+    ): \Generator {
+        foreach ($this->data[$table] as $row) {
+            if ($condition->check($row)) {
+                yield $row;
             }
         }
     }

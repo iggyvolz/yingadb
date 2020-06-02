@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace iggyvolz\yingadb\Attributes;
 
+use iggyvolz\ClassProperties\Hooks\PreSet;
 use iggyvolz\yingadb\DatabaseEntry;
 use iggyvolz\ClassProperties\Hooks\PreGet;
 use iggyvolz\ClassProperties\Hooks\PostSet;
@@ -14,7 +15,7 @@ use iggyvolz\ClassProperties\ClassProperties;
 /**
  * @property-read string $columnName
  */
-class DBProperty extends VirtualAttribute implements PostSet, PreGet
+class DBProperty extends VirtualAttribute implements PostSet, PreGet, PreSet
 {
     private string $columnName;
     public function __construct(string $columnName)
