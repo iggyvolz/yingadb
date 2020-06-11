@@ -9,6 +9,7 @@ use Generator;
 use ReflectionClass;
 use RuntimeException;
 use ReflectionProperty;
+use ReflectionAttribute;
 use ReflectionNamedType;
 use iggyvolz\yingadb\Drivers\IDatabase;
 use iggyvolz\Initializable\Initializable;
@@ -18,11 +19,9 @@ use iggyvolz\yingadb\Attributes\TableName;
 use iggyvolz\yingadb\Attributes\DBProperty;
 use iggyvolz\yingadb\Transformers\Transformer;
 use iggyvolz\yingadb\Exceptions\DuplicateEntry;
-use iggyvolz\virtualattributes\VirtualAttribute;
 use iggyvolz\yingadb\Condition\EqualToCondition;
 use iggyvolz\yingadb\Transformers\IntTransformer;
 use iggyvolz\yingadb\Transformers\NullTransformer;
-use iggyvolz\virtualattributes\ReflectionAttribute;
 use iggyvolz\yingadb\Condition\AlwaysTrueCondition;
 use iggyvolz\yingadb\Transformers\FloatTransformer;
 use iggyvolz\yingadb\Transformers\StringTransformer;
@@ -78,15 +77,13 @@ abstract class DatabaseEntry extends Identifiable implements Initializable
 
     foreach ($refl->getProperties() as $property) {
         if (
-            !empty($attributes = VirtualAttribute::getAttributes(
-                $property,
+            !empty($attributes = $property->getAttributes(
                 DBProperty::class,
                 ReflectionAttribute::IS_INSTANCEOF
             ))
         ) {
             if (
-                !empty($attributes = VirtualAttribute::getAttributes(
-                    $property,
+                !empty($attributes = $property->getAttributes(
                     Transformer::class,
                     ReflectionAttribute::IS_INSTANCEOF
                 ))
@@ -159,8 +156,7 @@ abstract class DatabaseEntry extends Identifiable implements Initializable
 
     foreach ($refl->getProperties() as $property) {
         if (
-            !empty($attributes = VirtualAttribute::getAttributes(
-                $property,
+            !empty($attributes = $property->getAttributes(
                 DBProperty::class,
                 ReflectionAttribute::IS_INSTANCEOF
             ))
@@ -187,7 +183,7 @@ abstract class DatabaseEntry extends Identifiable implements Initializable
     /**
      * The database that this instance is a member of
      */
-    // <<ReadOnlyProperty>>
+    <<ReadOnlyProperty>>
     protected IDatabase $database;
     protected static ?IDatabase $defaultDatabase = null;
     public static function setDefaultDatabase(?IDatabase $defaultDatabase): void
@@ -206,7 +202,7 @@ abstract class DatabaseEntry extends Identifiable implements Initializable
         // todo memoize
         $refl = new ReflectionClass(static::class);
         do {
-            $attributes = VirtualAttribute::getAttributes($refl, TableName::class, ReflectionAttribute::IS_INSTANCEOF);
+            $attributes = $refl->getAttributes(TableName::class, ReflectionAttribute::IS_INSTANCEOF);
             if (!empty($attributes)) {
                 /** @var TableName */
                 $attr = $attributes[0]->newInstance();
@@ -522,4 +518,3 @@ abstract class DatabaseEntry extends Identifiable implements Initializable
         }
     }
 }
-(new ReadOnlyProperty())->addToProperty(DatabaseEntry::class, "database");

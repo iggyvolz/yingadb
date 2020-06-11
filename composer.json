@@ -1,16 +1,17 @@
 {
     "name": "iggyvolz/yingadb",
+    "minimum-stability": "dev",
     "description": "Database wrapper for PHP",
     "type": "library",
     "require": {
-        "iggyvolz/class-properties": "dev-master",
-        "iggyvolz/virtual-attributes": "^0.2.0"
+        "iggyvolz/class-properties": "dev-php80",
+        "php": "^8.0.0-dev"
     },
     "require-dev": {
         "phan/phan": "^3.0",
         "vimeo/psalm": "^3.11",
         "squizlabs/php_codesniffer": "^3.5",
-        "phpunit/phpunit": "^9.1"
+        "phpunit/phpunit": "dev-master"
     },
     "license": "MIT",
     "authors": [

@@ -12,12 +12,12 @@ use iggyvolz\ClassProperties\Attributes\ReadOnlyProperty;
  */
 class ResolvedEqualToCondition extends ResolvedCondition
 {
-    // <<ReadOnlyProperty>>
+    <<ReadOnlyProperty>>
     private string $column;
     /**
      * @var float|int|string|null
      */
-    // <<ReadOnlyProperty>>
+    <<ReadOnlyProperty>>
     private $value;
 
     /**
@@ -39,5 +39,3 @@ class ResolvedEqualToCondition extends ResolvedCondition
         return ($row[$this->column] ?? null) === $this->value;
     }
 }
-(new ReadOnlyProperty())->addToProperty(ResolvedEqualToCondition::class, "column");
-(new ReadOnlyProperty())->addToProperty(ResolvedEqualToCondition::class, "value");

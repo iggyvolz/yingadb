@@ -12,12 +12,12 @@ use iggyvolz\yingadb\Drivers\IDatabase;
 /**
  * @property string $strCol
  */
-// <<TableName("tableName")>>
+<<TableName("tableName")>>
 class TestClassWithName extends DatabaseEntry
 {
-    // <<DBProperty("stringColumn")>>
-    // <<Property>>
-    // <<Identifier>>
+    <<DBProperty("stringColumn")>>
+    <<Property>>
+    <<Identifier>>
     private string $strCol = "";
     public function __construct(string $strCol = "", ?IDatabase $database = null)
     {
@@ -25,7 +25,3 @@ class TestClassWithName extends DatabaseEntry
         parent::__construct($database);
     }
 }
-(new TableName("tableName"))->addToClass(TestClassWithName::class);
-(new DBProperty("stringColumn"))->addToProperty(TestClass::class, "strCol");
-(new Property())->addToProperty(TestClass::class, "strCol");
-(new Identifier())->addToProperty(TestClass::class, "strCol");

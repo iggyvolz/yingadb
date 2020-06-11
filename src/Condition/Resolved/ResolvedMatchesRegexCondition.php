@@ -12,9 +12,9 @@ use iggyvolz\ClassProperties\Attributes\ReadOnlyProperty;
  */
 class ResolvedMatchesRegexCondition extends ResolvedCondition
 {
-    // <<ReadOnlyProperty>>
+    <<ReadOnlyProperty>>
     private string $column;
-    // <<ReadOnlyProperty>>
+    <<ReadOnlyProperty>>
     private string $regex;
 
     public function __construct(string $column, string $regex)
@@ -34,5 +34,3 @@ class ResolvedMatchesRegexCondition extends ResolvedCondition
         return is_string($val) && preg_match($this->regex, $val) === 1;
     }
 }
-(new ReadOnlyProperty())->addToProperty(ResolvedMatchesRegexCondition::class, "column");
-(new ReadOnlyProperty())->addToProperty(ResolvedMatchesRegexCondition::class, "regex");

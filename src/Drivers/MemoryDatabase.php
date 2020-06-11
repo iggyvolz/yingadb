@@ -56,7 +56,10 @@ class MemoryDatabase implements IDatabase
                 if (array_key_exists($col, $row1) && array_key_exists($col, $row2)) {
                     $comp = $row1[$col] <=> $row2[$col];
                     if ($comp === 0) {
+                        // Undefined behaviour
+                        // @codeCoverageIgnoreStart
                         continue;
+                        // @codeCoverageIgnoreEnd
                     }
                     if (!$asc) {
                         $comp *= -1;

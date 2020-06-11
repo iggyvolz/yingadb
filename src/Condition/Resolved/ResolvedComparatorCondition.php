@@ -12,12 +12,12 @@ use iggyvolz\ClassProperties\Attributes\ReadOnlyProperty;
  */
 abstract class ResolvedComparatorCondition extends ResolvedCondition
 {
-    // <<ReadOnlyProperty>>
+    <<ReadOnlyProperty>>
     private string $column;
     /**
      * @var float|int|string|null
      */
-    // <<ReadOnlyProperty>>
+    <<ReadOnlyProperty>>
     private $value;
     private bool $lessThan;
     private bool $allowEqual;
@@ -50,5 +50,3 @@ abstract class ResolvedComparatorCondition extends ResolvedCondition
         return ($val < $this->value) === $this->lessThan;
     }
 }
-(new ReadOnlyProperty())->addToProperty(ResolvedEqualToCondition::class, "column");
-(new ReadOnlyProperty())->addToProperty(ResolvedEqualToCondition::class, "value");

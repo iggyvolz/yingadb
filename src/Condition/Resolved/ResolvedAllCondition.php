@@ -15,7 +15,7 @@ class ResolvedAllCondition extends ResolvedCondition
     /**
      * @var ResolvedCondition[]
      */
-    // <<ReadOnlyProperty>>
+    <<ReadOnlyProperty>>
     private array $conditions;
 
     public function __construct(ResolvedCondition ...$conditions)
@@ -36,4 +36,3 @@ class ResolvedAllCondition extends ResolvedCondition
         return true;
     }
 }
-(new ReadOnlyProperty())->addToProperty(ResolvedAllCondition::class, "conditions");

@@ -4,32 +4,26 @@ declare(strict_types=1);
 
 namespace iggyvolz\yingadb\Attributes;
 
-use iggyvolz\ClassProperties\Hooks\PreSet;
+use Attribute;
 use iggyvolz\yingadb\DatabaseEntry;
 use iggyvolz\ClassProperties\Hooks\PreGet;
+use iggyvolz\ClassProperties\Hooks\PreSet;
 use iggyvolz\ClassProperties\Hooks\PostSet;
-use iggyvolz\virtualattributes\VirtualAttribute;
 use iggyvolz\ClassProperties\ClassProperties;
+use iggyvolz\ClassProperties\Attributes\ReadOnlyProperty;
 
-// <<PhpAttribute>>
+<<Attribute(Attribute::TARGET_PROPERTY)>>
 /**
  * @property-read string $columnName
  */
-class DBProperty extends VirtualAttribute implements PostSet, PreGet, PreSet
+class DBProperty extends ClassProperties implements PostSet, PreGet, PreSet
 {
+    <<ReadOnlyProperty>>
     private string $columnName;
     public function __construct(string $columnName)
     {
         // @phan-suppress-next-line PhanAccessReadOnlyMagicProperty
         $this->columnName = $columnName;
-        parent::__construct($columnName);
-    }
-    public function __get(string $prop): ?string
-    {
-        if ($prop === "columnName") {
-            return $this->columnName;
-        }
-        return null;
     }
     public function runPostSetHook(ClassProperties $target, string $property, $value): void
     {

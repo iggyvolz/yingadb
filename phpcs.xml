@@ -4,7 +4,6 @@
     <file>tests</file>
     <file>examples</file>
     <rule ref="PSR12">
-        <!-- Side effects ignored due to VirtualAttribute -->
-        <exclude name="PSR1.Files.SideEffects"/>
+        <!-- <exclude name="PSR1.Files.SideEffects"/> -->
     </rule>
 </ruleset>

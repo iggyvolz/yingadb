@@ -1,15 +1,17 @@
 <phpunit bootstrap="vendor/autoload.php" colors="true">
     <testsuites>
-        <testsuite name="ttests">
+        <testsuite name="tests">
             <directory>./tests</directory>
         </testsuite>
     </testsuites>
-    <logging>
-        <log type="coverage-html" target="./coverage" showUncoveredFiles="false" />
-    </logging>
-    <filter>
-        <whitelist processUncoveredFilesFromWhitelist="true">
-            <directory suffix=".php">./src</directory>
-        </whitelist>
-    </filter>
+    
+    <coverage>
+        <include>
+            <directory suffix=".php">/src</directory>
+        </include>
+
+        <report>
+            <html outputDirectory="coverage" lowUpperBound="50" highLowerBound="90"/>
+        </report>
+    </coverage>
 </phpunit>
