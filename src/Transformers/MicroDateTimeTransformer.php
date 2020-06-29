@@ -32,10 +32,13 @@ class MicroDateTimeTransformer extends Transformer
     {
         if (is_int($scalar)) {
             $seconds = floor($scalar / (1000 * 1000));
-            $microseconds = $scalar % (1000 * 1000);
-            $dt = DateTime::createFromFormat("U|u", "$seconds|$microseconds");
+            $microseconds = str_pad((string)($scalar % (1000 * 1000)), 6, "0", STR_PAD_LEFT);
+            $dt = DateTime::createFromFormat("U u", "$seconds $microseconds");
             if (!$dt) {
-                throw new \RuntimeException("Datetime converstion failure for $scalar");
+                // @codeCoverageIgnoreStart
+                // No known way to produce this error
+                throw new \RuntimeException("Datetime converstion failure for $seconds/$microseconds");
+                // @codeCoverageIgnoreEnd
             }
             return $dt;
         }

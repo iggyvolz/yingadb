@@ -33,7 +33,10 @@ class DateTimeTransformer extends Transformer
         if (is_int($scalar)) {
             $dt = DateTime::createFromFormat("U", strval($scalar));
             if (!$dt) {
+                // @codeCoverageIgnoreStart
+                // No known way to produce this error
                 throw new \RuntimeException("Datetime converstion failure for $scalar");
+                // @codeCoverageIgnoreEnd
             }
             return $dt;
         }
