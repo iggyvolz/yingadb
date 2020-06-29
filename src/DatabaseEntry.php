@@ -17,8 +17,10 @@ use iggyvolz\yingadb\Condition\Condition;
 use iggyvolz\ClassProperties\Identifiable;
 use iggyvolz\yingadb\Attributes\TableName;
 use iggyvolz\yingadb\Attributes\DBProperty;
+use iggyvolz\yingadb\Drivers\IBulkDatabase;
 use iggyvolz\yingadb\Transformers\Transformer;
 use iggyvolz\yingadb\Exceptions\DuplicateEntry;
+use iggyvolz\ClassProperties\Conditions\EqualTo;
 use iggyvolz\yingadb\Condition\EqualToCondition;
 use iggyvolz\yingadb\Transformers\IntTransformer;
 use iggyvolz\yingadb\Transformers\NullTransformer;
@@ -28,6 +30,7 @@ use iggyvolz\yingadb\Transformers\StringTransformer;
 use iggyvolz\yingadb\Transformers\DateTimeTransformer;
 use iggyvolz\ClassProperties\Attributes\ReadOnlyProperty;
 use iggyvolz\yingadb\Transformers\IdentifiableTransformer;
+use iggyvolz\ClassProperties\Conditions\ConditionException;
 
 /**
  * A class representing a row in a database row
@@ -70,33 +73,35 @@ abstract class DatabaseEntry extends Identifiable implements Initializable
      */
     private static function getTransformers(): array
     {
-        return iterator_to_array((/**
-         * @return \Generator<string,Transformer>
-         */function (): \Generator {
-            $refl = new ReflectionClass(static::class);
+        return iterator_to_array((
+            /**
+             * @return \Generator<string,Transformer>
+             */
+            function (): \Generator {
+                $refl = new ReflectionClass(static::class);
 
-    foreach ($refl->getProperties() as $property) {
-        if (
-            !empty($attributes = $property->getAttributes(
-                DBProperty::class,
-                ReflectionAttribute::IS_INSTANCEOF
-            ))
-        ) {
-            if (
-                !empty($attributes = $property->getAttributes(
-                    Transformer::class,
-                    ReflectionAttribute::IS_INSTANCEOF
-                ))
-            ) {
-                /** @var Transformer */
-                $attr = $attributes[0]->newInstance();
-                yield $property->getName() => $attr;
-            } else {
-                yield $property->getName() => static::getTransformerFor($property);
-            }
-        }
-    }
-})());
+                foreach ($refl->getProperties() as $property) {
+                    if (
+                        !empty($attributes = $property->getAttributes(
+                            DBProperty::class,
+                            ReflectionAttribute::IS_INSTANCEOF
+                        ))
+                    ) {
+                        if (
+                            !empty($attributes = $property->getAttributes(
+                                Transformer::class,
+                                ReflectionAttribute::IS_INSTANCEOF
+                            ))
+                        ) {
+                            /** @var Transformer */
+                            $attr = $attributes[0]->newInstance();
+                            yield $property->getName() => $attr;
+                        } else {
+                            yield $property->getName() => static::getTransformerFor($property);
+                        }
+                    }
+                }
+            })());
     }
 
     private static function getTransformerFor(ReflectionProperty $property, bool $alreadyWrapped = false): Transformer
@@ -175,6 +180,12 @@ abstract class DatabaseEntry extends Identifiable implements Initializable
      * @var array<string, string|int|null|float>
      */
     private array $modified = [];
+
+    /**
+     * Identifier as per the database
+     * Will only be updated on a synchronize call
+     */
+    private int|string $identifier;
     /**
      * Whether the entry has been deleted from the database
      * If true, any operation on this object other than __destruct is invalid
@@ -188,17 +199,20 @@ abstract class DatabaseEntry extends Identifiable implements Initializable
     protected static ?IDatabase $defaultDatabase = null;
     public static function setDefaultDatabase(?IDatabase $defaultDatabase): void
     {
+        static::init();
         self::$defaultDatabase = $defaultDatabase;
     }
     public static function getDefaultDatabase(): ?IDatabase
     {
+        static::init();
         return self::$defaultDatabase;
     }
     /**
      * Get the name of this table
      */
-    private static function getTableName(): string
+    public static function getTableName(): string
     {
+        static::init();
         // todo memoize
         $refl = new ReflectionClass(static::class);
         do {
@@ -231,6 +245,7 @@ abstract class DatabaseEntry extends Identifiable implements Initializable
             $row[$columnName] = static::toScalar($propertyName, $this->__get($propertyName));
         }
         $database->create(static::getTableName(), $row);
+        $this->identifier = $this->getIdentifier();
         parent::__construct();
     }
     /**
@@ -239,24 +254,24 @@ abstract class DatabaseEntry extends Identifiable implements Initializable
      * @param array<string,mixed> $data
      * @return void
      */
-    public static function updateMany(array $data, Condition $condition, IDatabase $database = null): void
+    public static function updateMany(array $data, array $condition, IDatabase $database = null): void
     {
+        static::init();
         $database = $database ?? static::$defaultDatabase;
         if (is_null($database)) {
             throw new \RuntimeException("No default database set");
         }
-        $dataTransformed = [];
-        /**
-         * @var mixed $value
-         */
-        foreach ($data as $prop => $value) {
-            $col = static::getColumnName($prop);
-            if (is_null($col)) {
-                throw new RuntimeException("Invalid property name $prop for updating");
+        $dataTransformed = static::transformKeysToScalar($data, "updating");
+        if($database instanceof IBulkDatabase) {
+            if($database->bulkUpdate(static::getTableName(), self::transformKeys($condition), self::$transformers[static::class], $dataTransformed)) {
+                return;
             }
-            $dataTransformed[$col] = static::toScalar($prop, $value);
         }
-        $database->update(static::getTableName(), $condition->resolveFor(static::class), $dataTransformed);
+        foreach(static::getAll($condition, $database) as $item) {
+            foreach($data as $key => $value) {
+                $item->__set($key, $value);
+            }
+        }
     }
     public static function getColumnName(string $propertyName): ?string
     {
@@ -341,23 +356,32 @@ abstract class DatabaseEntry extends Identifiable implements Initializable
             // No-op, the object is not modified
             return;
         }
-        $condition = new EqualToCondition(static::getIdentifierName(), $this->getIdentifier());
-        $this->database->update(static::getTableName(), $condition->resolveFor(static::class), $this->modified);
+        $this->database->update(static::getTableName(), $this->identifier, self::transformKeysToScalar($this->modified, "update"));
+        $this->identifier = $this->getIdentifier();
         $this->modified = [];
     }
 
     /**
      * Deletes many rows in the database
      *
+     * @psalm-var array<string,T> $condition
      * @return void
      */
-    public static function deleteMany(Condition $condition, IDatabase $database = null): void
+    public static function deleteMany(array $condition, IDatabase $database = null): void
     {
+        static::init();
         $database = $database ?? static::$defaultDatabase;
         if (!$database) {
             throw new \RuntimeException("No default database set");
         }
-        $database->delete(static::getTableName(), $condition->resolveFor(static::class));
+        if($database instanceof IBulkDatabase) {
+            if($database->bulkDelete(static::getTableName(), self::transformKeys($condition), self::$transformers[static::class])) {
+                return;
+            }
+        }
+        foreach(static::getAll($condition, $database) as $item) {
+            $item->delete();
+        }
     }
 
     /**
@@ -371,9 +395,7 @@ abstract class DatabaseEntry extends Identifiable implements Initializable
         if ($this->deleted) {
             throw new \RuntimeException("Cannot delete an already deleted object");
         }
-        $identifierName = static::getIdentifierName();
-        $condition = new EqualToCondition(static::getIdentifierName(), $this->getIdentifier());
-        $this->database->delete(static::getTableName(), $condition->resolveFor(static::class));
+        $this->database->delete(static::getTableName(), $this->getIdentifier());
         $this->deleted = true;
     }
 
@@ -385,13 +407,14 @@ abstract class DatabaseEntry extends Identifiable implements Initializable
      *   -> https://github.com/phan/phan/issues/2147
      */
     public static function getAll(
-        Condition $condition = null,
+        array $condition = [],
         $database = null,
         ?int $limit = null,
         int $offset = 0,
         array $order = [],
         bool $prefetch = true
     ): iterable {
+        static::init();
         if (is_null($database)) {
             if (self::$defaultDatabase) {
                 yield from static::getAll($condition, self::$defaultDatabase, $limit, $offset, $order, $prefetch);
@@ -418,8 +441,8 @@ abstract class DatabaseEntry extends Identifiable implements Initializable
                 );
                 usort($data, function (self $s1, self $s2) use ($order): int {
                     foreach ($order as $prop => $asc) {
-                        $val1 = static::toScalar($prop, $s1->$prop);
-                        $val2 = static::toScalar($prop, $s2->$prop);
+                        $val1 = static::toScalar($prop, $s1->__get($prop));
+                        $val2 = static::toScalar($prop, $s2->__get($prop));
                         $comp = $val1 <=> $val2;
                         if ($comp === 0) {
                             continue;
@@ -440,35 +463,69 @@ abstract class DatabaseEntry extends Identifiable implements Initializable
             return;
         }
         // Translate order into column names
-        $newOrder = [];
-        foreach ($order as $prop => $val) {
-            $colName = static::getColumnName($prop);
-            if (is_null($colName)) {
-                throw new RuntimeException("Invalid property name $prop for sorting");
-            }
-            $newOrder[$colName] = $val;
-        }
+        $newOrder = self::transformKeys($order, "sorting");
+        // Translate conditions into column names
+        $newCondition = self::transformKeys($condition, "condition");
         foreach (
             $database->read(
                 static::getTableName(),
-                ($condition ?? new AlwaysTrueCondition())->resolveFor(static::class),
+                $newCondition,
                 $limit,
                 $offset,
                 $newOrder,
                 $prefetch
             ) as $row
         ) {
-            $self = static::createWithoutConstructor();
-            // @phan-suppress-next-line PhanAccessReadOnlyMagicProperty
-            $self->database = $database;
-            foreach ($row as $key => $value) {
-                $property = static::getFromColumnName($key);
-                if (!is_null($property)) {
-                    $self->__set($property, $self->fromScalar($property, $value));
+            try {
+                $self = static::createWithoutConstructor();
+                // @phan-suppress-next-line PhanAccessReadOnlyMagicProperty
+                $self->database = $database;
+                foreach ($row as $key => $value) {
+                    $property = static::getFromColumnName($key);
+                    if (!is_null($property)) {
+                        $self->__set($property, $self->fromScalar($property, $value));
+                    }
                 }
+                $self->identifier = $self->getIdentifier();
+                yield $self;
+            } catch(ConditionException $_) {
+                // Do not yield this row
             }
-            yield $self;
         }
+    }
+
+    /**
+     * @psalm-var array<string,T> $arr
+     * @psalm-return array<string,T>
+     */
+    private static function transformKeys(array $arr, string $purpose):array
+    {
+        return iterator_to_array((function() use($arr, $purpose){
+            foreach($arr as $prop => $value) {
+                $col = static::getColumnName($prop);
+                if (is_null($col)) {
+                    throw new RuntimeException("Invalid property name $prop for $purpose");
+                }
+                yield $col => $value;
+            }
+        })());
+    }
+
+    /**
+     * @var array<string,mixed> $arr
+     * @return array<string,int|float|string|null>
+     */
+    private static function transformKeysToScalar(array $arr, string $purpose):array
+    {
+        return iterator_to_array((function() use($arr, $purpose){
+            foreach($arr as $prop => $value) {
+                $col = static::getColumnName($prop);
+                if (is_null($col)) {
+                    throw new RuntimeException("Invalid property name $prop for $purpose");
+                }
+                yield $col => static::toScalar($prop, $value);
+            }
+        })());
     }
 
     /**
@@ -486,11 +543,12 @@ abstract class DatabaseEntry extends Identifiable implements Initializable
      * @return ?static
      */
     public static function get(
-        Condition $condition,
+        array $condition,
         $database = null,
         int $offset = 0,
         array $order = []
     ): ?self {
+        static::init();
         foreach (static::getAll($condition, $database, 1, $offset, $order, false) as $entry) {
             return $entry;
         }
@@ -506,10 +564,11 @@ abstract class DatabaseEntry extends Identifiable implements Initializable
      */
     public static function getFromIdentifier($identifier): ?self
     {
+        static::init();
         if ($identifier instanceof Identifiable) {
             $identifier = $identifier->getIdentifier();
         }
-        return static::get(new EqualToCondition(static::getIdentifierName(), $identifier));
+        return static::get([static::getIdentifierName() => new EqualTo($identifier)]);
     }
     public function __destruct()
     {

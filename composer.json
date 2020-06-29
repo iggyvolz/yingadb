@@ -4,7 +4,8 @@
     "description": "Database wrapper for PHP",
     "type": "library",
     "require": {
-        "iggyvolz/class-properties": "dev-php80",
+        "iggyvolz/class-properties": "dev-main",
+        "iggyvolz/class-properties-conditions": "dev-main",
         "php": "^8.0.0-dev"
     },
     "require-dev": {
@@ -23,8 +24,10 @@
     "autoload": {
         "psr-4": {
             "iggyvolz\\yingadb\\": "src/",
-            "iggyvolz\\yingadb\\tests\\": "tests/",
-            "iggyvolz\\yingadb\\examples\\": "examples/"
+            "iggyvolz\\yingadb\\examples\\": "examples/",
+            "iggyvolz\\yingadb\\tests\\": "tests/"
         }
+    },
+    "autoload-dev": {
     }
 }

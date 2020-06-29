@@ -18,9 +18,9 @@ class DatabaseEntryTest extends TestCase
 
     public function testConstructionAndRetrieval(): void
     {
-        $db = new MemoryDatabase();
+        $db = new MemoryDatabase([TestClass::class, TestClassWithName::class]);
         new TestClass("val", 4, $db);
-        $newInstance = TestClass::get(new AlwaysTrueCondition(), $db);
+        $newInstance = TestClass::get([], $db);
         $this->assertNotNull($newInstance);
         $this->assertSame("val", $newInstance->strCol);
         $this->assertSame($db, $newInstance->database);
@@ -28,8 +28,8 @@ class DatabaseEntryTest extends TestCase
 
     public function testRetrievalWithoutInstance(): void
     {
-        $db = new MemoryDatabase();
-        $this->assertNull(TestClass::get(new AlwaysTrueCondition(), $db));
+        $db = new MemoryDatabase([TestClass::class, TestClassWithName::class]);
+        $this->assertNull(TestClass::get([], $db));
     }
 
     public function testNamedClassName(): void
@@ -48,17 +48,17 @@ class DatabaseEntryTest extends TestCase
 
     public function testSettingDefaultDatabase(): void
     {
-        $db = new MemoryDatabase();
+        $db = new MemoryDatabase([TestClass::class, TestClassWithName::class]);
         DatabaseEntry::setDefaultDatabase($db);
         $this->assertSame(DatabaseEntry::getDefaultDatabase(), $db);
     }
 
     public function testConstructionWithDefaultDatabase(): void
     {
-        $db = new MemoryDatabase();
+        $db = new MemoryDatabase([TestClass::class, TestClassWithName::class]);
         DatabaseEntry::setDefaultDatabase($db);
         new TestClass("val");
-        $newInstance = TestClass::get(new AlwaysTrueCondition(), $db);
+        $newInstance = TestClass::get([], $db);
         $this->assertNotNull($newInstance);
         $this->assertSame("val", $newInstance->strCol);
         $this->assertSame($db, $newInstance->database);
@@ -73,7 +73,7 @@ class DatabaseEntryTest extends TestCase
 
     public function testSyncDeleted(): void
     {
-        $db = new MemoryDatabase();
+        $db = new MemoryDatabase([TestClass::class, TestClassWithName::class]);
         $inst = new TestClass("val", 4, $db);
         $inst->delete();
         $this->expectException(\RuntimeException::class);
@@ -83,7 +83,7 @@ class DatabaseEntryTest extends TestCase
 
     public function testDeleteDeleted(): void
     {
-        $db = new MemoryDatabase();
+        $db = new MemoryDatabase([TestClass::class, TestClassWithName::class]);
         $inst = new TestClass("val", 4, $db);
         $inst->delete();
         $this->expectException(\RuntimeException::class);
@@ -93,7 +93,7 @@ class DatabaseEntryTest extends TestCase
 
     public function testGetFromDeleted(): void
     {
-        $db = new MemoryDatabase();
+        $db = new MemoryDatabase([TestClass::class, TestClassWithName::class]);
         $inst = new TestClass("val", 4, $db);
         $inst->delete();
         $this->expectException(\RuntimeException::class);
@@ -103,7 +103,7 @@ class DatabaseEntryTest extends TestCase
 
     public function testSetFromDeleted(): void
     {
-        $db = new MemoryDatabase();
+        $db = new MemoryDatabase([TestClass::class, TestClassWithName::class]);
         $inst = new TestClass("val", 4, $db);
         $inst->delete();
         $this->expectException(\RuntimeException::class);
@@ -113,7 +113,7 @@ class DatabaseEntryTest extends TestCase
 
     public function testGetFromIdentifier(): void
     {
-        $db = new MemoryDatabase();
+        $db = new MemoryDatabase([TestClass::class, TestClassWithName::class]);
         DatabaseEntry::setDefaultDatabase($db);
         new TestClass("val");
         $newInstance = TestClass::getFromIdentifier("val");
@@ -124,7 +124,7 @@ class DatabaseEntryTest extends TestCase
 
     public function testGetFromIdentifierForced(): void
     {
-        $db = new MemoryDatabase();
+        $db = new MemoryDatabase([TestClass::class, TestClassWithName::class]);
         DatabaseEntry::setDefaultDatabase($db);
         new TestClass("val");
         $newInstance = TestClass::getFromIdentifierForced("val");
@@ -135,7 +135,7 @@ class DatabaseEntryTest extends TestCase
 
     public function testGetFromIdentifiable(): void
     {
-        $db = new MemoryDatabase();
+        $db = new MemoryDatabase([TestClass::class, TestClassWithName::class]);
         DatabaseEntry::setDefaultDatabase($db);
         $inst = new TestClass("val");
         $newInstance = TestClass::getFromIdentifierForced($inst);
@@ -146,17 +146,17 @@ class DatabaseEntryTest extends TestCase
 
     public function testGettingFromOneDatabaseOrdered(): void
     {
-        $db = new MemoryDatabase();
+        $db = new MemoryDatabase([TestClass::class, TestClassWithName::class]);
         DatabaseEntry::setDefaultDatabase($db);
         new TestClass("val1");
         new TestClass("val2");
-        $instances = self::iterableToArray(TestClass::getAll(
-            new AlwaysTrueCondition(),
+        $instances = [...(TestClass::getAll(
+            [],
             null,
             null,
             0,
             ["strCol" => true]
-        ));
+        ))];
         $this->assertSame(2, count($instances));
         [$ninst1, $ninst2] = $instances;
         $this->assertSame("val1", $ninst1->strCol);
@@ -165,17 +165,17 @@ class DatabaseEntryTest extends TestCase
 
     public function testGettingFromOneDatabaseReverseOrdered(): void
     {
-        $db = new MemoryDatabase();
+        $db = new MemoryDatabase([TestClass::class, TestClassWithName::class]);
         DatabaseEntry::setDefaultDatabase($db);
         new TestClass("val1");
         new TestClass("val2");
-        $instances = self::iterableToArray(TestClass::getAll(
-            new AlwaysTrueCondition(),
+        $instances = [...(TestClass::getAll(
+            [],
             null,
             null,
             0,
             ["strCol" => false]
-        ));
+        ))];
         $this->assertSame(2, count($instances));
         [$ninst2, $ninst1] = $instances;
         $this->assertSame("val1", $ninst1->strCol);
@@ -184,17 +184,17 @@ class DatabaseEntryTest extends TestCase
 
     public function testGettingFromMultipleDatabases(): void
     {
-        $db1 = new MemoryDatabase();
-        $db2 = new MemoryDatabase();
+        $db1 = new MemoryDatabase([TestClass::class, TestClassWithName::class]);
+        $db2 = new MemoryDatabase([TestClass::class, TestClassWithName::class]);
         new TestClass("val1", 4, $db1);
         new TestClass("val2", 4, $db2);
-        $instances = self::iterableToArray(TestClass::getAll(
-            new AlwaysTrueCondition(),
+        $instances = [...(TestClass::getAll(
+            [],
             [$db1, $db2],
             null,
             0,
             ["strCol" => true]
-        ));
+        ))];
         $this->assertSame(2, count($instances));
         [$ninst1, $ninst2] = $instances;
         $this->assertSame("val1", $ninst1->strCol);
@@ -205,17 +205,17 @@ class DatabaseEntryTest extends TestCase
 
     public function testGettingFromMultipleDatabasesReversed(): void
     {
-        $db1 = new MemoryDatabase();
-        $db2 = new MemoryDatabase();
+        $db1 = new MemoryDatabase([TestClass::class, TestClassWithName::class]);
+        $db2 = new MemoryDatabase([TestClass::class, TestClassWithName::class]);
         new TestClass("val1", 4, $db1);
         new TestClass("val2", 4, $db2);
-        $instances = self::iterableToArray(TestClass::getAll(
-            new AlwaysTrueCondition(),
+        $instances = [...(TestClass::getAll(
+            [],
             [$db1, $db2],
             null,
             0,
             ["strCol" => false]
-        ));
+        ))];
         $this->assertSame(2, count($instances));
         [$ninst2, $ninst1] = $instances;
         $this->assertSame("val1", $ninst1->strCol);
@@ -226,11 +226,11 @@ class DatabaseEntryTest extends TestCase
 
     public function testGettingFromMultipleDatabasesUnordered(): void
     {
-        $db1 = new MemoryDatabase();
-        $db2 = new MemoryDatabase();
+        $db1 = new MemoryDatabase([TestClass::class, TestClassWithName::class]);
+        $db2 = new MemoryDatabase([TestClass::class, TestClassWithName::class]);
         new TestClass("val1", 4, $db1);
         new TestClass("val2", 4, $db2);
-        $instances = self::iterableToArray(TestClass::getAll(new AlwaysTrueCondition(), [$db1, $db2]));
+        $instances = [...(TestClass::getAll([], [$db1, $db2]))];
         $this->assertSame(2, count($instances));
         $values = array_map(function (TestClass $t): string {
             return $t->strCol;
@@ -243,72 +243,62 @@ class DatabaseEntryTest extends TestCase
     {
         $this->expectException(\RuntimeException::class);
         $this->expectExceptionMessage("No default database set");
-        self::iterableToArray(TestClass::getAll());
+        [...(TestClass::getAll())];
     }
 
     public function testSortingInvalid(): void
     {
-        $db1 = new MemoryDatabase();
+        $db1 = new MemoryDatabase([TestClass::class, TestClassWithName::class]);
         new TestClass("val1", 4, $db1);
         $this->expectException(\RuntimeException::class);
         $this->expectExceptionMessage("Invalid property name invalid for sorting");
-        self::iterableToArray(TestClass::getAll(new AlwaysTrueCondition(), $db1, null, 0, ["invalid" => true]));
-    }
-
-    /**
-     * @template T1
-     * @template T2
-     * @param iterable<T1,T2> $it
-     * @return array<T1,T2>
-     */
-    private static function iterableToArray(iterable $it): array
-    {
-        return array(...$it);
+        [...(TestClass::getAll([], $db1, null, 0, ["invalid" => true]))];
     }
 
     public function testDeletingManyWithoutDatabase(): void
     {
         $this->expectException(\RuntimeException::class);
         $this->expectExceptionMessage("No default database set");
-        TestClass::deleteMany(new AlwaysTrueCondition());
+        TestClass::deleteMany([]);
     }
 
     public function testDeletingMany(): void
     {
-        $db1 = new MemoryDatabase();
+        $db1 = new MemoryDatabase([TestClass::class, TestClassWithName::class]);
         DatabaseEntry::setDefaultDatabase($db1);
         new TestClass("val1");
         new TestClass("val2");
-        TestClass::deleteMany(new AlwaysTrueCondition());
-        $this->assertSame(0, count(self::iterableToArray(TestClass::getAll())));
+        TestClass::deleteMany([]);
+        $this->assertSame(0, count([...(TestClass::getAll())]));
     }
 
+    // TODO tests to update the identifier
     public function testUpdatingMany(): void
     {
-        $db1 = new MemoryDatabase();
+        $db1 = new MemoryDatabase([TestClass::class, TestClassWithName::class]);
         DatabaseEntry::setDefaultDatabase($db1);
         new TestClass("val1");
         new TestClass("val2");
-        TestClass::updateMany(["strCol" => "bing"], new AlwaysTrueCondition());
-        $data = self::iterableToArray(TestClass::getAll());
+        TestClass::updateMany(["intCol" => 4], []);
+        $data = [...(TestClass::getAll())];
         $this->assertSame(2, count($data));
-        $this->assertSame("bing", $data[0]->strCol);
-        $this->assertSame("bing", $data[1]->strCol);
+        $this->assertSame(4, $data[0]->intCol);
+        $this->assertSame(4, $data[1]->intCol);
     }
 
     public function testUpdatingManyWithoutDatabase(): void
     {
         $this->expectException(\RuntimeException::class);
         $this->expectExceptionMessage("No default database set");
-        TestClass::updateMany(["strCol" => "bing"], new AlwaysTrueCondition());
+        TestClass::updateMany(["strCol" => "bing"], []);
     }
 
     public function testUpdatingManyWithInvalidColumn(): void
     {
-        $db1 = new MemoryDatabase();
+        $db1 = new MemoryDatabase([TestClass::class, TestClassWithName::class]);
         DatabaseEntry::setDefaultDatabase($db1);
         $this->expectException(\RuntimeException::class);
         $this->expectExceptionMessage("Invalid property name invalidColumn for updating");
-        TestClass::updateMany(["invalidColumn" => "bing"], new AlwaysTrueCondition());
+        TestClass::updateMany(["invalidColumn" => "bing"], []);
     }
 }
